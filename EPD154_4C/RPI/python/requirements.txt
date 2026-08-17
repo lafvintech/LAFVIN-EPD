@@ -1,0 +1,2 @@
+# Install the hardware binding from Raspberry Pi OS: sudo apt install python3-lgpio
+Pillow>=8.0
