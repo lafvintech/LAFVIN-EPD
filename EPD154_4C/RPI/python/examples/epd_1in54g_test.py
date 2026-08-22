@@ -118,7 +118,7 @@ def main():
         logger.info("Final full init and clear")
         epd.init()
         epd.clear(epd.WHITE)
-        epd.sleep()
+        epd.shutdown()
         logger.info("Demo complete")
         return 0
     except KeyboardInterrupt:

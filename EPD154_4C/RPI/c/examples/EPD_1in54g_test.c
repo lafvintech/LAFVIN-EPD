@@ -17,6 +17,7 @@ int EPD_1in54g_test(void)
     UBYTE *BlackImage = (UBYTE *)malloc(EPD_1IN54G_FRAME_BYTES);
     if (BlackImage == NULL) {
         printf("Failed to apply for black memory...\r\n");
+        EPD_Shutdown();
         DEV_Module_Exit();
         return -1;
     }
@@ -80,10 +81,9 @@ int EPD_1in54g_test(void)
     EPD_1IN54G_Clear(EPD_1IN54G_WHITE);
 
     printf("Goto Sleep...\r\n");
-    EPD_1IN54G_Sleep();
+    EPD_Shutdown();
     free(BlackImage);
     BlackImage = NULL;
-    DEV_Delay_ms(2000);//important, at least 2s
     DEV_Module_Exit();
 
     return 0;

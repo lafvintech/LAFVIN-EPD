@@ -111,6 +111,15 @@ class EPD154Tests(unittest.TestCase):
         self.assertEqual(set(data_payloads[0]), {0x55})
         self.assertEqual(hardware.commands(), [0x10, 0x12])
 
+    def test_shutdown_sleeps_waits_then_asserts_reset_low(self):
+        hardware = FakeHardware()
+        EPD(hardware).shutdown()
+        self.assertEqual(hardware.commands(), [0x02, 0x07])
+        self.assertEqual(
+            hardware.events[-3:],
+            [("delay", 2000), ("gpio", hardware.RST_PIN, 0), ("module_exit",)],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

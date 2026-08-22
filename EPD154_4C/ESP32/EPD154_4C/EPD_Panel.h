@@ -18,5 +18,6 @@ void EPD_Init_Fast(void);
 void EPD_Clear(UBYTE color);
 void EPD_Display(const UBYTE *image);
 void EPD_Sleep(void);
+void EPD_Shutdown(void);
 
 #endif

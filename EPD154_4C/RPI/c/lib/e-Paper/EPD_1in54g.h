@@ -17,5 +17,6 @@ void EPD_1IN54G_Init_Fast(void);
 void EPD_1IN54G_Clear(UBYTE color);
 void EPD_1IN54G_Display(const UBYTE *image);
 void EPD_1IN54G_Sleep(void);
+void EPD_Shutdown(void);
 
 #endif

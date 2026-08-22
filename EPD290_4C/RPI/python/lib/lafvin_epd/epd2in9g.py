@@ -301,16 +301,27 @@ class EPD:
         """Compatibility alias for scripts written against the legacy Clear() spelling."""
         self.clear(color)
 
+    def _enter_deep_sleep(self):
+        self.send_command(CMD_POWER_OFF)
+        self.send_data(0x00)
+        self.wait_until_ready()
+        self.send_command(CMD_DEEP_SLEEP)
+        self.send_data(0xA5)
+
     def sleep(self):
         """Power off the controller, enter deep sleep, and release GPIO/SPI."""
         try:
-            self.send_command(CMD_POWER_OFF)
-            self.send_data(0x00)
-            self.wait_until_ready()
-
-            self.send_command(CMD_DEEP_SLEEP)
-            self.send_data(0xA5)
+            self._enter_deep_sleep()
             self._hardware.delay_ms(2000)
+        finally:
+            self.close()
+
+    def shutdown(self):
+        """Enter deep sleep, wait for settling, and assert reset low."""
+        try:
+            self._enter_deep_sleep()
+            self._hardware.delay_ms(2000)
+            self._hardware.digital_write(self.reset_pin, 0)
         finally:
             self.close()
 

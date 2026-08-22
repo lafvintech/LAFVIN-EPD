@@ -13,6 +13,48 @@ The two display sizes use the same wiring on each platform. Their panel
 dimensions, initialization sequences, refresh timing, and image data remain
 model-specific.
 
+## Choose full or fast refresh
+
+All platforms select the refresh mode during panel initialization. The
+initialization call prepares the controller but does not update the display by
+itself; call the matching display or clear function afterward.
+
+| Mode | Typical use | Arduino / ESP32 | Raspberry Pi C (1.54-inch) | Raspberry Pi C (2.9-inch) | Raspberry Pi Python |
+| --- | --- | --- | --- | --- | --- |
+| Full refresh | Initial/final clear or when display quality is the priority | `EPD_Init()` | `EPD_1IN54G_Init()` | `EPD_2IN9G_Init()` | `epd.init()` |
+| Fast refresh | When shorter update time is the priority | `EPD_Init_Fast()` | `EPD_1IN54G_Init_Fast()` | `EPD_2IN9G_Init_Fast()` | `epd.init_fast()` |
+
+Arduino and ESP32 example:
+
+```cpp
+EPD_Init();          // Select full refresh.
+EPD_Display(image);  // Write the image and refresh the panel.
+
+EPD_Init_Fast();     // Select fast refresh.
+EPD_Display(image);  // Write the image and refresh the panel.
+```
+
+Raspberry Pi C uses the size-specific initialization and display functions:
+
+```c
+EPD_1IN54G_Init_Fast();
+EPD_1IN54G_Display(image);
+
+// For the 2.9-inch panel, use EPD_2IN9G_Init_Fast() and
+// EPD_2IN9G_Display(image) instead.
+```
+
+Raspberry Pi Python example:
+
+```python
+epd.init_fast()
+epd.display(image)
+```
+
+Call the full or fast initialization function again before changing refresh
+modes. Both display sizes support both modes on every platform in this
+repository.
+
 ## Before wiring
 
 Disconnect power before connecting or disconnecting the display. Connect VCC
@@ -131,3 +173,15 @@ may be changed directly.
 | ESP32 / ESP32-S3 | 4 MHz | 4 MHz | `EPD_SPI_FREQUENCY` |
 | Raspberry Pi C | 4 MHz | 4 MHz | `SPI_SPEED_HZ` |
 | Raspberry Pi Python | 4 MHz | 4 MHz | `SPI_SPEED_HZ` |
+
+## Final shutdown
+
+Use the shutdown API when an example has finished:
+
+- Arduino / ESP32: `EPD_Shutdown()`
+- Raspberry Pi C: `EPD_Shutdown()`
+- Raspberry Pi Python: `epd.shutdown()`
+
+The shutdown sequence powers off the panel controller, enters deep sleep,
+waits 2 seconds, and then drives RST low. `EPD_Sleep()` / `epd.sleep()` remain
+available for intermediate sleep before a later reinitialization.
