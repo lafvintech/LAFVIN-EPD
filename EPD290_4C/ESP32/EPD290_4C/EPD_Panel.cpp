@@ -58,14 +58,14 @@ void EPD_ReadBusy(void)
 }
 
 /******************************************************************************
-function :	Wait until the busy_pin goes LOW
+function :	Wait until the busy_pin goes HIGH
 parameter:
 ******************************************************************************/
 static void EPD_ReadBusyH(void)
 {
     Debug("e-Paper busy H\r\n");
     DEV_Delay_ms(100);
-    while(!DEV_Digital_Read(EPD_BUSY_PIN)) {      //LOW: idle, HIGH: busy
+    while(!DEV_Digital_Read(EPD_BUSY_PIN)) {      //LOW: busy, HIGH: idle
         DEV_Delay_ms(5);
     }
     Debug("e-Paper busy H release\r\n");
@@ -331,11 +331,4 @@ void EPD_Sleep(void)
 
     EPD_SendCommand(0x07); // DEEP_SLEEP
     EPD_SendData(0XA5);
-}
-
-void EPD_Shutdown(void)
-{
-    EPD_Sleep();
-    DEV_Delay_ms(2000);
-    DEV_Digital_Write(EPD_RST_PIN, 0);
 }

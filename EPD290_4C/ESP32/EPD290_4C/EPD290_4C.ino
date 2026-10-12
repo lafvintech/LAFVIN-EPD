@@ -87,9 +87,10 @@ void setup(void)
     Debug("Final full init and clear\r\n");
     EPD_Init();
     EPD_Clear(EPD_WHITE);
-    EPD_Shutdown();
+    EPD_Sleep();
 
     free(image_buffer);
+    DEV_Delay_ms(2000);
     Debug("Demo complete\r\n");
 }
 

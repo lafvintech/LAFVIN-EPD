@@ -107,7 +107,7 @@ typedef enum {
 typedef struct {
     UWORD Year;  //0000
     UBYTE  Month; //1 - 12
-    UBYTE  Day;   //1 - 30
+    UBYTE  Day;   //1 - 31, depending on the month
     UBYTE  Hour;  //0 - 23
     UBYTE  Min;   //0 - 59
     UBYTE  Sec;   //0 - 59

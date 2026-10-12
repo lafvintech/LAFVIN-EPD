@@ -12,7 +12,7 @@ parameter:
     image   :   Pointer to the image cache
     width   :   The width of the picture
     Height  :   The height of the picture
-    Color   :   Whether the picture is inverted
+    Color   :   Initial color value stored in Paint.Color; does not clear the buffer
 ******************************************************************************/
 void Paint_NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD Color)
 {
@@ -25,8 +25,6 @@ void Paint_NewImage(UBYTE *image, UWORD Width, UWORD Height, UWORD Rotate, UWORD
     Paint.Scale = 2;
     Paint.WidthByte = (Width % 8 == 0)? (Width / 8 ): (Width / 8 + 1);
     Paint.HeightByte = Height;    
-//    printf("WidthByte = %d, HeightByte = %d\r\n", Paint.WidthByte, Paint.HeightByte);
-//    printf(" EPD_WIDTH / 8 = %d\r\n",  122 / 8);
    
     Paint.Rotate = Rotate;
     Paint.Mirror = MIRROR_NONE;
@@ -58,7 +56,6 @@ parameter:
 void Paint_SetRotate(UWORD Rotate)
 {
     if(Rotate == ROTATE_0 || Rotate == ROTATE_90 || Rotate == ROTATE_180 || Rotate == ROTATE_270) {
-        // Debug("Set image Rotate %d\r\n", Rotate);
         Paint.Rotate = Rotate;
     } else {
         Debug("rotate = 0, 90, 180, 270\r\n");
@@ -74,7 +71,6 @@ void Paint_SetMirroring(UBYTE mirror)
 {
     if(mirror == MIRROR_NONE || mirror == MIRROR_HORIZONTAL || 
         mirror == MIRROR_VERTICAL || mirror == MIRROR_ORIGIN) {
-        // Debug("mirror image x:%s, y:%s\r\n",(mirror & 0x01)? "mirror":"none", ((mirror >> 1) & 0x01)? "mirror":"none");
         Paint.Mirror = mirror;
     } else {
         Debug("mirror should be MIRROR_NONE, MIRROR_HORIZONTAL, \
@@ -92,7 +88,7 @@ void Paint_SetScale(UBYTE scale)
         Paint.Scale = scale;
         Paint.WidthByte = (Paint.WidthMemory % 4 == 0)? (Paint.WidthMemory / 4 ): (Paint.WidthMemory / 4 + 1);
     }
-	else if(scale == 6 || scale == 7) {//Only applicable with 5in65 e-Paper
+	else if(scale == 6 || scale == 7) {// Legacy 4-bit packing: two pixels per byte; this demo uses scale 4.
 		Paint.Scale = 7;
 		Paint.WidthByte = (Paint.WidthMemory % 2 == 0)? (Paint.WidthMemory / 2 ): (Paint.WidthMemory / 2 + 1);
 	}
@@ -177,7 +173,6 @@ void Paint_SetPixel(UWORD Xpoint, UWORD Ypoint, UWORD Color)
 		UBYTE Rdata = Paint.Image[Addr];
 		Rdata = Rdata & (~(0xF0 >> ((X % 2)*4)));//Clear first, then set value
 		Paint.Image[Addr] = Rdata | ((Color << 4) >> ((X % 2)*4));
-		// printf("Add =  %d ,data = %d\r\n",Addr,Rdata);	
     }
 }
 
@@ -225,7 +220,7 @@ void Paint_ClearWindows(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend, UWOR
 {
     UWORD X, Y;
     for (Y = Ystart; Y < Yend; Y++) {
-        for (X = Xstart; X < Xend; X++) {//8 pixel =  1 byte
+        for (X = Xstart; X < Xend; X++) {// Visit each pixel in the selected window.
             Paint_SetPixel(X, Y, Color);
         }
     }
@@ -254,7 +249,6 @@ void Paint_DrawPoint(UWORD Xpoint, UWORD Ypoint, UWORD Color,
             for (YDir_Num = 0; YDir_Num < 2 * Dot_Pixel - 1; YDir_Num++) {
                 if(Xpoint + XDir_Num - Dot_Pixel < 0 || Ypoint + YDir_Num - Dot_Pixel < 0)
                     break;
-                // printf("x = %d, y = %d\r\n", Xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel);
                 Paint_SetPixel(Xpoint + XDir_Num - Dot_Pixel, Ypoint + YDir_Num - Dot_Pixel, Color);
             }
         }
@@ -304,7 +298,6 @@ void Paint_DrawLine(UWORD Xstart, UWORD Ystart, UWORD Xend, UWORD Yend,
         Dotted_Len++;
         //Painted dotted line, 2 point is really virtual
         if (Line_Style == LINE_STYLE_DOTTED && Dotted_Len % 3 == 0) {
-            //Debug("LINE_DOTTED\r\n");
             Paint_DrawPoint(Xpoint, Ypoint, IMAGE_BACKGROUND, Line_width, DOT_STYLE_DFT);
             Dotted_Len = 0;
         } else {
@@ -458,17 +451,14 @@ void Paint_DrawChar(UWORD Xpoint, UWORD Ypoint, const char Acsii_Char,
             if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
                 if (*ptr & (0x80 >> (Column % 8)))
                     Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground);
-                    // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
             } else {
                 if (*ptr & (0x80 >> (Column % 8))) {
                     Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Foreground);
-                    // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                 } else {
                     Paint_SetPixel(Xpoint + Column, Ypoint + Page, Color_Background);
-                    // Paint_DrawPoint(Xpoint + Column, Ypoint + Page, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                 }
             }
-            //One pixel is 8 bits
+            // Advance after eight 1-bit glyph pixels (one byte).
             if (Column % 8 == 7)
                 ptr++;
         }// Write a line
@@ -538,23 +528,10 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
     const char* p_text = pString;
     int x = Xstart, y = Ystart;
     int i, j,Num;
-    // for (size_t i = 0; p_text[i] != 0; i++)
-    // {
-    //     Serial.println(*(p_text+i)&0xff, HEX);
-    //     Serial.println(i);
-    //      if((*(p_text+i)&0xff) <= 0x7F)
-    //      {
-    //         Serial.println("111111");
-    //      }
-    //      else{
-    //         Serial.println("222222");
-    //      }
-    // }
-    
 
     /* Send the string character by character on EPD */
     while (*p_text != 0) {
-        if((*p_text&0xff) <= 0x7F) {  //ASCII < 126
+        if((*p_text&0xff) <= 0x7F) {  // ASCII byte: 0x00..0x7F.
             for(Num = 0; Num < font->size; Num++) {
                 if(*p_text== font->table[Num].index[0]) {
                     const unsigned char* ptr = &font->table[Num].matrix[0];
@@ -564,15 +541,12 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
                             if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
                                 if (*ptr & (0x80 >> (i % 8))) {
                                     Paint_SetPixel(x + i, y + j, Color_Foreground);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 }
                             } else {
                                 if (*ptr & (0x80 >> (i % 8))) {
                                     Paint_SetPixel(x + i, y + j, Color_Foreground);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 } else {
                                     Paint_SetPixel(x + i, y + j, Color_Background);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 }
                             }
                             if (i % 8 == 7) {
@@ -588,7 +562,7 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
             }
             /* Point on the next character */
             p_text += 1;
-            /* Decrement the column position by 16 */
+            /* Advance x by the ASCII glyph width. */
             x += font->ASCII_Width;
         } else {        //Chinese
             for(Num = 0; Num < font->size; Num++) {
@@ -602,15 +576,12 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
                             if (FONT_BACKGROUND == Color_Background) { //this process is to speed up the scan
                                 if (*ptr & (0x80 >> (i % 8))) {
                                     Paint_SetPixel(x + i, y + j, Color_Foreground);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 }
                             } else {
                                 if (*ptr & (0x80 >> (i % 8))) {
                                     Paint_SetPixel(x + i, y + j, Color_Foreground);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Foreground, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 } else {
                                     Paint_SetPixel(x + i, y + j, Color_Background);
-                                    // Paint_DrawPoint(x + i, y + j, Color_Background, DOT_PIXEL_DFT, DOT_STYLE_DFT);
                                 }
                             }
                             if (i % 8 == 7) {
@@ -626,7 +597,7 @@ void Paint_DrawString_CN(UWORD Xstart, UWORD Ystart, const char * pString, cFONT
             }
             /* Point on the next character */
             p_text += 3;
-            /* Decrement the column position by 16 */
+            /* Advance x by the Chinese glyph width. */
             x += font->Width;
         }
     }
@@ -703,12 +674,11 @@ void Paint_DrawTime(UWORD Xstart, UWORD Ystart, PAINT_TIME *pTime, sFONT* Font,
 }
 
 /******************************************************************************
-function:	Display monochrome bitmap
+function:	Copy a bitmap buffer in the current Paint.Scale format
 parameter:
     image_buffer ：A picture data converted to a bitmap
 info:
-    Use a computer to convert the image into a corresponding array,
-    and then embed the array directly into Imagedata.cpp as a .c file.
+    The source must match the active image buffer's dimensions and pixel packing.
 ******************************************************************************/
 void Paint_DrawBitMap(const unsigned char* image_buffer)
 {
@@ -716,7 +686,7 @@ void Paint_DrawBitMap(const unsigned char* image_buffer)
     UDOUBLE Addr = 0;
 
     for (y = 0; y < Paint.HeightByte; y++) {
-        for (x = 0; x < Paint.WidthByte; x++) {//8 pixel =  1 byte
+        for (x = 0; x < Paint.WidthByte; x++) {// Copy one packed framebuffer byte.
             Addr = x + y * Paint.WidthByte;
             Paint.Image[Addr] = (unsigned char)image_buffer[Addr];
         }

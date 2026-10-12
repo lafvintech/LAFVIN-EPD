@@ -65,7 +65,7 @@ void EPD_ReadBusy(void)
 }
 
 /******************************************************************************
-function :	Wait until the busy_pin goes LOW
+function :	Wait until the busy_pin goes HIGH
 parameter:
 ******************************************************************************/
 static void EPD_ReadBusyH(void)
@@ -73,7 +73,7 @@ static void EPD_ReadBusyH(void)
     Debug("e-Paper busy H\r\n");
     DEV_Delay_ms(100);
     const unsigned long start = millis();
-    while(!DEV_Digital_Read(EPD_BUSY_PIN)) {      //LOW: idle, HIGH: busy
+    while(!DEV_Digital_Read(EPD_BUSY_PIN)) {      //LOW: busy, HIGH: idle
         if (millis() - start >= 120000UL) {
             Debug("ERROR: BUSY stayed LOW for 120 seconds\r\n");
             while (1) {

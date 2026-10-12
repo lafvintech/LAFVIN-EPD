@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "platform": "Windows x64",
+  "python": "3.12.7",
+  "dependencies": {
+    "Pillow": "10.4.0",
+    "tkinterdnd2": "0.4.3",
+    "PyInstaller": "6.22.3"
+  },
+  "exe_bytes": 14255549,
+  "sha256": "4c145abc24e4fbbd6cc994ab9f48253068ca4dc27b927d124cc8299c785da121",
+  "self_test_passed": true
+}

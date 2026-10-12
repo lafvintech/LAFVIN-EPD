@@ -17,7 +17,6 @@ int EPD_2in9g_test(void)
     UBYTE *BlackImage = (UBYTE *)malloc(EPD_2IN9G_FRAME_BYTES);
     if (BlackImage == NULL) {
         printf("Failed to apply for black memory...\r\n");
-        EPD_Shutdown();
         DEV_Module_Exit();
         return -1;
     }
@@ -94,9 +93,10 @@ int EPD_2in9g_test(void)
     EPD_2IN9G_Clear(EPD_2IN9G_WHITE);
 
     printf("Goto Sleep...\r\n");
-    EPD_Shutdown();
+    EPD_2IN9G_Sleep();
     free(BlackImage);
     BlackImage = NULL;
+    DEV_Delay_ms(2000);//important, at least 2s
     DEV_Module_Exit();
 
     return 0;
