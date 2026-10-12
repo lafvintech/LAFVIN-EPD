@@ -4,6 +4,7 @@
 
 void Handler(int signo)
 {
+    (void)signo;
     //System Exit
     printf("\r\nHandler:exit\r\n");
     DEV_Module_Exit();

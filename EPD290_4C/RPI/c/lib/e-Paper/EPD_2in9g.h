@@ -17,5 +17,6 @@ void EPD_2IN9G_Init_Fast(void);
 void EPD_2IN9G_Clear(UBYTE color);
 void EPD_2IN9G_Display(const UBYTE *image);
 void EPD_2IN9G_Sleep(void);
+void EPD_Shutdown(void);
 
 #endif

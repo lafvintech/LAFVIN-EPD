@@ -332,3 +332,10 @@ void EPD_Sleep(void)
     EPD_SendCommand(0x07); // DEEP_SLEEP
     EPD_SendData(0XA5);
 }
+
+void EPD_Shutdown(void)
+{
+    EPD_Sleep();
+    DEV_Delay_ms(2000);
+    DEV_Digital_Write(EPD_RST_PIN, 0);
+}

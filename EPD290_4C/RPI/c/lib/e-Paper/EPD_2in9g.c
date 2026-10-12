@@ -249,3 +249,10 @@ void EPD_2IN9G_Sleep(void)
         Debug("EPD deep sleep command failed\n");
     }
 }
+
+void EPD_Shutdown(void)
+{
+    EPD_2IN9G_Sleep();
+    DEV_Delay_ms(2000);
+    DEV_Digital_Write(EPD_RST_PIN, 0);
+}
